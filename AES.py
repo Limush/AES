@@ -22,7 +22,8 @@ def int_in_str(text):
         Text_all.append(ASCII_p_2_inv['0'*(8 - len(simv)) + simv])
     return ''.join(Text_all)
 
-def encryption(Text, Expansion_key, Rounds):
+
+def Encryption_block(Text, Expansion_key, Rounds):
     Text = AddRoundKey(Text, Expansion_key[0])
     for i in range(Rounds - 1):
         Text = SubBytes(Text)
@@ -35,7 +36,7 @@ def encryption(Text, Expansion_key, Rounds):
     return Text
 
 
-def decryption(Text, Expansion_key, Rounds):
+def Decryption_block(Text, Expansion_key, Rounds):
     Text = AddRoundKey(Text, Expansion_key[-1])
     Text = ShiftRowInv(Text, Rounds, size)
     Text = SubBytesInv(Text)
@@ -48,13 +49,29 @@ def decryption(Text, Expansion_key, Rounds):
     return Text
 
 
+def Encypt(Text, Rounds):
+    encrypt_all = []
+    for i in range(len(Text) // 16):
+        encrypt = Encryption_block(Text[0 + i * 16:16 + i * 16], Expansion_key, Rounds)
+        encrypt_all.extend(encrypt)
+    return encrypt_all
+
+
+def Decypt(Text, Rounds):
+    decrypt_all = []
+    for i in range(len(Text_all) // 16):
+        decrypt = Decryption_block(Text[0 + i * 16:16 + i * 16], Expansion_key, Rounds)
+        decrypt_all.extend(decrypt)
+    return decrypt_all
+
 ASCII_p_2, ASCII_p_2_inv = ASCII()
 
 row, column = 4, 8
 size = row * column
+Rounds = 10 if size == 16 else (12 if size == 24 else 14)
+
 Secret_key = [random.randint(0, 255) for _ in range(size)]
 Expansion_key = KeyExtension(Secret_key)
-
 
 text = 'Курсовая работа AES128'
 print(f"Начальная строка:\n"
@@ -63,19 +80,12 @@ print(f"Начальная строка:\n"
       f"\t {Secret_key}")
 Text_all = str_in_int(text)
 
-Rounds = 10 if size == 16 else (12 if size == 24 else 14)
-encrypt_all = []
-for i in range(len(Text_all) // 16):
-    encrypt = encryption(Text_all[0 + i * 16:16 + i * 16], Expansion_key, Rounds)
-    encrypt_all.extend(encrypt)
-else:
-    print(f"Зашифрованная строка:\n"
-          f"\t{int_in_str(encrypt_all)}\n")
 
-decrypt_all = []
-for i in range(len(Text_all) // 16):
-    decrypt = decryption(encrypt_all[0 + i * 16:16 + i * 16], Expansion_key, Rounds)
-    decrypt_all.extend(decrypt)
-else:
-    print(f"Расшифрованная строка:\n"
-          f"\t{int_in_str(decrypt_all)}\n")
+encrypt = Encypt(Text_all, Rounds)
+print(f"Зашифрованная строка:\n"
+      f"\t{int_in_str(encrypt)}\n")
+
+
+decrypt = Decypt(encrypt, Rounds)
+print(f"Расшифрованная строка:\n"
+      f"\t{int_in_str(decrypt)}\n")
