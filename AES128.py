@@ -6,16 +6,6 @@ from SubBytes import SubBytes, SubBytesInv
 from ShiftRow import ShiftRow, ShiftRowInv
 from MixColumn import MixColumn, MixColumnInv
 
-#           Нужно реализовать:
-#   Ключ из текста  -
-#   KeyExtension    +
-#   AddRoundKey     +
-#   SubBytes        +       SubBytesInv     +
-#   ShiftRow        +       ShiftRowInv     +
-#   MixColumn       +       MixColumnInv    +
-#   Encoded         +
-#   Decoded         +
-
 
 def str_in_int(text):
     Text_all = [int(ASCII_p_2[i], 2) for i in text]
@@ -36,23 +26,23 @@ def encryption(Text, Expansion_key, Rounds):
     Text = AddRoundKey(Text, Expansion_key[0])
     for i in range(Rounds - 1):
         Text = SubBytes(Text)
-        Text = ShiftRow(Text, Rounds)
+        Text = ShiftRow(Text, Rounds, size)
         Text = MixColumn(Text)
         Text = AddRoundKey(Text, Expansion_key[i+1])
     Text = SubBytes(Text)
-    Text = ShiftRow(Text, Rounds)
+    Text = ShiftRow(Text, Rounds, size)
     Text = AddRoundKey(Text, Expansion_key[Rounds])
     return Text
 
 
 def decryption(Text, Expansion_key, Rounds):
     Text = AddRoundKey(Text, Expansion_key[-1])
-    Text = ShiftRowInv(Text, Rounds)
+    Text = ShiftRowInv(Text, Rounds, size)
     Text = SubBytesInv(Text)
     for i in range(Rounds - 1, 0, -1):
         Text = AddRoundKey(Text, Expansion_key[i])
         Text = MixColumnInv(Text)
-        Text = ShiftRowInv(Text, Rounds)
+        Text = ShiftRowInv(Text, Rounds, size)
         Text = SubBytesInv(Text)
     Text = AddRoundKey(Text, Expansion_key[0])
     return Text
@@ -60,22 +50,23 @@ def decryption(Text, Expansion_key, Rounds):
 
 ASCII_p_2, ASCII_p_2_inv = ASCII()
 
-Secret_key = [random.randint(0, 255) for _ in range(16)]
+row, column = 4, 8
+size = row * column
+Secret_key = [random.randint(0, 255) for _ in range(size)]
 Expansion_key = KeyExtension(Secret_key)
 
 
 text = 'Курсовая работа AES128'
 print(f"Начальная строка:\n"
-      f"\t{text}\n")
+      f"\t{text}\n"
+      f"Ключ:\n"
+      f"\t {Secret_key}")
 Text_all = str_in_int(text)
 
-row, column = 4, 4
-size = row * column
-Rounds = 10 if size == 16 else (12 if size == 18 else 14)
+Rounds = 10 if size == 16 else (12 if size == 24 else 14)
 encrypt_all = []
-for i in range(len(Text_all) // size):
-    encrypt = encryption(Text_all[0 + i * size:size + i * size], Expansion_key, Rounds)
-
+for i in range(len(Text_all) // 16):
+    encrypt = encryption(Text_all[0 + i * 16:16 + i * 16], Expansion_key, Rounds)
     encrypt_all.extend(encrypt)
 else:
     print(f"Зашифрованная строка:\n"
@@ -83,7 +74,7 @@ else:
 
 decrypt_all = []
 for i in range(len(Text_all) // 16):
-    decrypt = decryption(encrypt_all[0 + i * size:size + i * size], Expansion_key, Rounds)
+    decrypt = decryption(encrypt_all[0 + i * 16:16 + i * 16], Expansion_key, Rounds)
     decrypt_all.extend(decrypt)
 else:
     print(f"Расшифрованная строка:\n"
