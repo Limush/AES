@@ -1,4 +1,5 @@
 import random
+import time
 from ASCII_forming import ASCII
 from KeyExtension import KeyExtension
 from AddRoundKey import AddRoundKey
@@ -23,7 +24,7 @@ def int_in_str(text):
     return ''.join(Text_all)
 
 
-def Encryption_block(Text, Expansion_key, Rounds):
+def Encryption_block(Text, Expansion_key, Rounds, size):
     Text = AddRoundKey(Text, Expansion_key[0])
     for i in range(Rounds - 1):
         Text = SubBytes(Text)
@@ -36,7 +37,7 @@ def Encryption_block(Text, Expansion_key, Rounds):
     return Text
 
 
-def Decryption_block(Text, Expansion_key, Rounds):
+def Decryption_block(Text, Expansion_key, Rounds, size):
     Text = AddRoundKey(Text, Expansion_key[-1])
     Text = ShiftRowInv(Text, Rounds, size)
     Text = SubBytesInv(Text)
@@ -49,43 +50,51 @@ def Decryption_block(Text, Expansion_key, Rounds):
     return Text
 
 
-def Encypt(Text, Rounds):
+def Encypt(Text, Secret_key, size):
+    start_time = time.time()
+    Expansion_key = KeyExtension(Secret_key)
+    Rounds = 10 if size == 16 else (12 if size == 24 else 14)
+    Text = str_in_int(Text)
     encrypt_all = []
     for i in range(len(Text) // 16):
-        encrypt = Encryption_block(Text[0 + i * 16:16 + i * 16], Expansion_key, Rounds)
+        encrypt = Encryption_block(Text[0 + i * 16:16 + i * 16], Expansion_key, Rounds, size)
         encrypt_all.extend(encrypt)
-    return encrypt_all
+    return int_in_str(encrypt_all), time.time() - start_time
 
 
-def Decypt(Text, Rounds):
+def Decypt(Text, Secret_key, size):
+    start_time = time.time()
+
+    Expansion_key = KeyExtension(Secret_key)
+    Rounds = 10 if size == 16 else (12 if size == 24 else 14)
+    Text = str_in_int(Text)
     decrypt_all = []
-    for i in range(len(Text_all) // 16):
-        decrypt = Decryption_block(Text[0 + i * 16:16 + i * 16], Expansion_key, Rounds)
+    for i in range(len(Text) // 16):
+        decrypt = Decryption_block(Text[0 + i * 16:16 + i * 16], Expansion_key, Rounds, size)
         decrypt_all.extend(decrypt)
-    return decrypt_all
+    return int_in_str(decrypt_all), time.time() - start_time
+
+
+def generate_key(size):
+    Secret_key = [random.randint(0, 255) for _ in range(size)]
+    return Secret_key
 
 ASCII_p_2, ASCII_p_2_inv = ASCII()
 
-row, column = 4, 8
-size = row * column
-Rounds = 10 if size == 16 else (12 if size == 24 else 14)
+# print(Encypt('Курсовая работа AES128', generate_key(32), 32))
 
-Secret_key = [random.randint(0, 255) for _ in range(size)]
-Expansion_key = KeyExtension(Secret_key)
+# text = 'Курсовая работа AES128'
+# print(f"Начальная строка:\n"
+#       f"\t{text}\n"
+#       f"Ключ:\n"
+#       f"\t {Expansion_key[0]}")
+# Text_all = str_in_int(text)
 
-text = 'Курсовая работа AES128'
-print(f"Начальная строка:\n"
-      f"\t{text}\n"
-      f"Ключ:\n"
-      f"\t {Secret_key}")
-Text_all = str_in_int(text)
-
-
-encrypt = Encypt(Text_all, Rounds)
-print(f"Зашифрованная строка:\n"
-      f"\t{int_in_str(encrypt)}\n")
-
-
-decrypt = Decypt(encrypt, Rounds)
-print(f"Расшифрованная строка:\n"
-      f"\t{int_in_str(decrypt)}\n")
+# encrypt = Encypt(Text_all, Rounds)
+# print(f"Зашифрованная строка:\n"
+#       f"\t{int_in_str(encrypt)}\n")
+#
+#
+# decrypt = Decypt(encrypt, Rounds)
+# print(f"Расшифрованная строка:\n"
+#       f"\t{int_in_str(decrypt)}\n")
